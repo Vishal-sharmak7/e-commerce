@@ -1,0 +1,28 @@
+
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon -r dotenv/config --experimental-json-modules  app.js",
+    "build": "echo 'No build step needed'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.13.3",
+    "nodemailer": "^7.0.3",
+    "nodemon": "^3.1.10",
+    "razorpay": "^2.9.6"
+  }
+}
+
