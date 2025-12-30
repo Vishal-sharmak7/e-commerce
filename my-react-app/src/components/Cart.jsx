@@ -110,7 +110,7 @@ const navigate = useNavigate();
 
   try {
     const orderRes = await axios.post(
-      "http://localhost:8520/api/v1/order/create",
+      `${import.meta.env.VITE_API_URL}/order/create`,
       {
         userID: userId,
         totalAmount: total,
@@ -141,7 +141,7 @@ const navigate = useNavigate();
       handler: async function (response) {
         try {
           const verifyRes = await axios.post(
-            "http://localhost:8520/api/v1/order/verify",
+            `${import.meta.env.VITE_API_URL}/order/verify`,
             response,
             {
               headers: {
