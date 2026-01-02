@@ -58,31 +58,23 @@ const ProductDetails = () => {
       toast.error("Failed to update quantity");
     }
   };
-useEffect(() => {
-  const checkCart = async () => {
-    const userId = localStorage.getItem("_id");
-    if (!userId || !product) return;
 
-    try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/cart/${userId}`
-      );
-
-      const item = res.data.items.find(
-        (i) => i.productId === product._id
-      );
-
-      if (item) {
-        setInCart(true);
-        setQuantity(item.quantity);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/merch/${id}`
+        );
+        setProduct(res.data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
       }
-    } catch (err) {
-      console.log(err);
-    }
-  };
+    };
 
-  checkCart();
-}, [product]);
+    fetchProduct();
+  }, [id]);
 
   if (loading) {
     return (
