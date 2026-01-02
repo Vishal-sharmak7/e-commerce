@@ -8,8 +8,9 @@ const Cart = () => {
   const userId = localStorage.getItem("_id");
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
   // 🔥 Fetch Cart
   const fetchCart = async () => {
     try {
@@ -62,7 +63,9 @@ const navigate = useNavigate();
   // 🗑 Clear Cart
   const clearCart = async () => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/cart/delete/${userId}`);
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/cart/delete/${userId}`
+      );
       toast.success("Cart cleared");
       setCart([]);
     } catch {
@@ -93,99 +96,101 @@ const navigate = useNavigate();
     });
   };
 
+
   const handleCheckout = async () => {
-  const userId = localStorage.getItem("_id");
-  const token = localStorage.getItem("token");
+    if (checkoutLoading) return; 
 
-  if (!userId || !token) {
-    toast.error("Please login to continue");
-    return;
-  }
+    const userId = localStorage.getItem("_id");
+    const token = localStorage.getItem("token");
 
-  const resScript = await loadRazorpay();
-  if (!resScript) {
-    toast.error("Razorpay SDK failed to load");
-    return;
-  }
+    if (!userId || !token) {
+      toast.error("Please login to continue");
+      setCheckoutLoading(false);
+      return;
+    }
 
-  try {
-    const orderRes = await axios.post(
-      `${import.meta.env.VITE_API_URL}/order/create`,
-      {
-        userID: userId,
-        totalAmount: total,
-        items: cart.map((item) => ({
-          productId: item.product._id,
-          title: item.product.title,
-          price: item.product.price,
-          quantity: item.quantity,
-        })),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    const resScript = await loadRazorpay();
+    if (!resScript) {
+      toast.error("Razorpay SDK failed to load");
+      setCheckoutLoading(false);
+      return;
+    }
+
+    try {
+      const orderRes = await axios.post(
+        `${import.meta.env.VITE_API_URL}/order/create`,
+        {
+          userID: userId,
+          totalAmount: total,
+          items: cart.map((item) => ({
+            productId: item.product._id,
+            title: item.product.title,
+            price: item.product.price,
+            quantity: item.quantity,
+          })),
         },
-      }
-    );
-
-    const { razorpayOrder } = orderRes.data;
-
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: razorpayOrder.amount,
-      currency: "INR",
-      name: "VEXUS Store",
-      description: "Order Payment",
-      order_id: razorpayOrder.id,
-
-      handler: async function (response) {
-        try {
-          const verifyRes = await axios.post(
-            `${import.meta.env.VITE_API_URL}/order/verify`,
-            response,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          // ✅ SUCCESS CONFIRMATION
-          if (verifyRes.data.success) {
-            toast.success("Payment successful 🎉");
-
-            // ✅ CLEAR CART
-            await clearCart();
-
-            // 🔄 UPDATE HEADER COUNT
-            window.dispatchEvent(new Event("cart-change"));
-
-            // ✅ REDIRECT TO HOME
-            navigate("/");
-          }
-        } catch (err) {
-          console.error(err);
-          toast.error("Payment verification failed");
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      },
+      );
 
-      prefill: {
-        name: localStorage.getItem("name"),
-        email: localStorage.getItem("email"),
-      },
+      const { razorpayOrder } = orderRes.data;
 
-      theme: {
-        color: "#000000",
-      },
-    };
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: razorpayOrder.amount,
+        currency: "INR",
+        name: "VEXUS Store",
+        description: "Order Payment",
+        order_id: razorpayOrder.id,
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
-  } catch (err) {
-    console.error(err);
-    toast.error("Payment failed");
-  }
-};
+        handler: async function (response) {
+          try {
+            const verifyRes = await axios.post(
+              `${import.meta.env.VITE_API_URL}/order/verify`,
+              response,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (verifyRes.data.success) {
+              toast.success("Payment successful 🎉");
+
+              await clearCart();
+              window.dispatchEvent(new Event("cart-change"));
+              navigate("/");
+            }
+          } catch (err) {
+            toast.error("Payment verification failed");
+          } finally {
+            setCheckoutLoading(false); // ✅ stop loader after payment
+          }
+        },
+
+        prefill: {
+          name: localStorage.getItem("name"),
+          email: localStorage.getItem("email"),
+        },
+
+        theme: {
+          color: "#000000",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      toast.error("Payment failed");
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <>
       <section className="pt-32 pb-24 px-6 bg-gray-100 min-h-screen">
@@ -263,10 +268,23 @@ const navigate = useNavigate();
                     Clear Cart
                   </button>
                   <button
-                    onClick={() => handleCheckout()}
-                    className="bg-black text-white px-8 py-3 rounded-full z-50 relative"
+                    onClick={handleCheckout}
+                    disabled={checkoutLoading}
+                    className={`px-8 py-3 rounded-full font-bold relative flex items-center gap-2
+                      ${
+                        checkoutLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-black text-white hover:opacity-90"
+                      }`}
                   >
-                    Checkout
+                    {checkoutLoading ? (
+                      <>
+                        <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Checkout"
+                    )}
                   </button>
                 </div>
               </div>

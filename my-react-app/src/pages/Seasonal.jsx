@@ -67,7 +67,7 @@ const Seasonal = () => {
       <div className="max-w-7xl mx-auto px-6 mb-24">
         <div className="rounded-3xl bg-gradient-to-r from-black to-gray-800 text-white p-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <h3 className="text-2xl font-bold">
-            🔥 Seasonal Sale – Flat 30% Off
+            Seasonal Sale – Flat 30% Off
           </h3>
           <Link to="/shop" className="bg-white text-black px-8 py-3 rounded-full text-sm font-semibold hover:opacity-90">
             Shop Now

@@ -87,13 +87,13 @@ const Header = () => {
             <Link to="/shop" className="hover:text-black">
               Shop
             </Link>
-            <Link to="/" className="hover:text-black">
+            <Link to="/shop/men" className="hover:text-black">
               Men
             </Link>
-            <Link to="/" className="hover:text-black">
+            <Link to="/shop/women" className="hover:text-black">
               Women
             </Link>
-            <Link to="/" className="hover:text-black">
+            <Link to="/tranding" className="hover:text-black">
               Trending
             </Link>
           </div>
@@ -108,7 +108,7 @@ const Header = () => {
             <Link to="/seasonal" className="hidden md:block hover:text-black">
               Seasonal
             </Link>
-            <Link to="/" className="hidden md:block hover:text-black">
+            <Link to="/shop/accessories" className="hidden md:block hover:text-black">
               Accessories
             </Link>
 
@@ -236,21 +236,21 @@ const Header = () => {
                 </Link>
                 <Link
                   onClick={handleSidebarLinkClick}
-                  to="/"
+                  to="/shop/men"
                   className="hover:text-black hover:translate-x-2 transition-all ease-in-out duration-300"
                 >
                   Men
                 </Link>
                 <Link
                   onClick={handleSidebarLinkClick}
-                  to="/"
+                  to="/shop/women"
                   className="hover:text-black hover:translate-x-2 transition-all ease-in-out duration-300"
                 >
                   Women
                 </Link>
                 <Link
                   onClick={handleSidebarLinkClick}
-                  to="/"
+                  to="/tranding"
                   className="hover:text-black hover:translate-x-2 transition-all ease-in-out duration-300"
                 >
                   Trending
@@ -267,7 +267,7 @@ const Header = () => {
                 </Link>
                 <Link
                   onClick={handleSidebarLinkClick}
-                  to="/"
+                  to="/shop/accessories"
                   className="hover:text-black hover:translate-x-2 transition-all ease-in-out duration-300"
                 >
                   Accessories

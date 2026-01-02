@@ -40,24 +40,36 @@ const ProductDetails = () => {
   };
 
   const updateQuantity = async (newQty) => {
-    const userId = localStorage.getItem("_id");
+  const userId = localStorage.getItem("_id");
 
-    if (newQty < 1) return;
+  if (newQty < 0) return;
 
-    try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/cart/update`, {
-        userId,
-        productId: product._id,
-        quantity: newQty,
+  try {
+    if (newQty === 0) {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/cart/remove`, {
+        data: { userId, productId: product._id },
       });
 
-      setQuantity(newQty);
+      setQuantity(0);
+      setInCart(false); 
       window.dispatchEvent(new Event("cart-change"));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update quantity");
+      return;
     }
-  };
+
+    await axios.put(`${import.meta.env.VITE_API_URL}/cart/update`, {
+      userId,
+      productId: product._id,
+      quantity: newQty,
+    });
+
+    setQuantity(newQty);
+    setInCart(true); 
+    window.dispatchEvent(new Event("cart-change"));
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to update quantity");
+  }
+};
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -85,12 +97,13 @@ const ProductDetails = () => {
   }
 
   if (!product) return null;
+  
 
   return (
     <>
       <section className="pt-32 pb-24 px-6 bg-gray-100 min-h-screen">
         <div className="max-w-6xl mx-auto">
-          {/* 🔙 Back */}
+          
           <button
             onClick={() => navigate(-1)}
             className="mb-10 flex items-center gap-2 text-sm font-bold hover:-translate-x-1 transition"
@@ -156,7 +169,7 @@ const ProductDetails = () => {
         </div>
       </section>
 
-      {/* Related */}
+     
       <Shop limit={4} />
     </>
   );

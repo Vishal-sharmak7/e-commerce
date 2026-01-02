@@ -14,6 +14,10 @@ import Seasonal from './pages/Seasonal'
 import ProductDetails from './components/ProductDetails'
 import ScrollToTop from './components/ScrollToTop'
 import Cart from './components/Cart'
+import Men from './components/Men'
+import Women from './components/Women'
+import Accessories from './components/Accessories'
+import Trending from './components/Trending'
 
 function App() {
   
@@ -36,6 +40,12 @@ function App() {
         <Route path="/support" element={<Support />} />
         <Route path="/seasonal" element={<Seasonal />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/shop/men" element={<Men />} />
+        <Route path="/shop/women" element={<Women />} />
+        <Route path="/shop/accessories" element={<Accessories />} />
+        <Route path="/tranding" element={<Trending />} />
+
+
       </Routes>
       <Footer/>
       

@@ -9,66 +9,80 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState("login"); // login | register
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const apiBase = `${import.meta.env.VITE_API_URL}`;
+  const [loading, setLoading] = useState(false);
+
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.id]: e.target.value });
 
   const handleSubmit = async () => {
-    try {
-      if (mode === "register") {
-        if (!form.name || !form.email || form.password.length < 4) {
-          toast.error("Fill all fields correctly (password min 4)");
-          return;
-        }
+  if (loading) return; // 🚫 prevent double click
 
-        const res = await fetch(`${apiBase}/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
+  setLoading(true);
 
-        const data = await res.json();
-        if (!data.success) {
-          toast.error(data.message);
-          return;
-        }
-
-        toast.success("Registered successfully! Now login ✅");
-        setMode("login");
-        setForm({ name: "", email: "", password: "" });
-      } else {
-        if (!form.email || form.password.length < 4) {
-          toast.error("Enter valid credentials");
-          return;
-        }
-
-        const res = await fetch(`${apiBase}/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, password: form.password }),
-        });
-
-        const data = await res.json();
-        if (!data.success) {
-          toast.error(data.message);
-          return;
-        }
-
-        toast.success("Logged in successfully 🎉");
-
-        localStorage.setItem("token", data.jwttoken);
-        localStorage.setItem("name", data.name);
-        localStorage.setItem("email", data.email);
-        localStorage.setItem("_id", data._id);
-        window.dispatchEvent(new Event("auth-change")); // 🔥 this forces navbar update
-
-        onClose();
-        navigate("/");
+  try {
+    if (mode === "register") {
+      if (!form.name || !form.email || form.password.length < 4) {
+        toast.error("Fill all fields correctly (password min 4)");
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      toast.error("Server error occurred");
+
+      const res = await fetch(`${apiBase}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        toast.error(data.message);
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Registered successfully! Now login ✅");
+      setMode("login");
+      setForm({ name: "", email: "", password: "" });
+
+    } else {
+      if (!form.email || form.password.length < 4) {
+        toast.error("Enter valid credentials");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch(`${apiBase}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        toast.error(data.message);
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Logged in successfully 🎉");
+
+      localStorage.setItem("token", data.jwttoken);
+      localStorage.setItem("name", data.name);
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("_id", data._id);
+      window.dispatchEvent(new Event("auth-change"));
+
+      onClose();
+      navigate("/");
     }
-  };
+  } catch (err) {
+    toast.error("Server error occurred");
+  } finally {
+    setLoading(false); // ✅ ALWAYS stop loader
+  }
+};
+
 
   return (
     <AnimatePresence>
@@ -131,11 +145,22 @@ const AuthModal = ({ isOpen, onClose }) => {
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-black text-white py-3 rounded-xl font-bold hover:opacity-90"
+              disabled={loading}
+              className={`w-full py-3 rounded-xl font-bold transition
+    ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-black hover:opacity-90"}
+    text-white flex items-center justify-center gap-2`}
             >
-              {mode === "login" ? "Login" : "Register"}
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {mode === "login" ? "Logging in..." : "Registering..."}
+                </>
+              ) : mode === "login" ? (
+                "Login"
+              ) : (
+                "Register"
+              )}
             </button>
-
             <button
               onClick={() => setMode(mode === "login" ? "register" : "login")}
               className="mt-4 w-full text-xs text-gray-500 hover:underline"
