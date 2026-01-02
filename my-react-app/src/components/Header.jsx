@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaUserCircle } from "react-icons/fa";
 import toast from "react-hot-toast";
 import OtpLoginModal from "./OtpLoginModal";
+import { FaCartArrowDown } from "react-icons/fa";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
@@ -133,7 +134,7 @@ const Header = () => {
               onClick={() => navigate("/cart")}
               className="relative h-10 w-10 rounded-full border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-white transition-colors"
             >
-              <span className="text-lg">🛒</span>
+              <span className="text-lg"><FaCartArrowDown /></span>
 
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">

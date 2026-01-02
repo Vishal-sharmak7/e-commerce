@@ -10,6 +10,8 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(0);
+  const [inCart, setInCart] = useState(false);
 
   const handleAddToCart = async () => {
     const userId = localStorage.getItem("_id");
@@ -26,13 +28,34 @@ const ProductDetails = () => {
         quantity: 1,
       });
 
-      toast.success("Added to cart 🛒");
+      setQuantity(1);
+      setInCart(true);
 
-      // 🔄 update header badge
+      toast.success("Added to cart");
       window.dispatchEvent(new Event("cart-change"));
     } catch (err) {
       console.error(err);
       toast.error("Failed to add to cart");
+    }
+  };
+
+  const updateQuantity = async (newQty) => {
+    const userId = localStorage.getItem("_id");
+
+    if (newQty < 1) return;
+
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/cart/update`, {
+        userId,
+        productId: product._id,
+        quantity: newQty,
+      });
+
+      setQuantity(newQty);
+      window.dispatchEvent(new Event("cart-change"));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update quantity");
     }
   };
 
@@ -95,21 +118,39 @@ const ProductDetails = () => {
                 {product.title}
               </h1>
 
-              <p className="text-2xl font-semibold mb-6">
-                ₹{product.price}
-              </p>
+              <p className="text-2xl font-semibold mb-6">₹{product.price}</p>
 
               <p className="text-gray-600 leading-relaxed mb-10">
                 {product.description ||
                   "Premium streetwear crafted for modern style."}
               </p>
 
-              <button
-                onClick={handleAddToCart}
-                className="bg-black text-white px-10 py-4 rounded-full font-bold hover:opacity-90 transition cursor-pointer w-max"
-              >
-                Add to Cart
-              </button>
+              {!inCart ? (
+                <button
+                  onClick={handleAddToCart}
+                  className="bg-black text-white px-10 py-4 rounded-full font-bold hover:opacity-90 transition cursor-pointer w-max"
+                >
+                  Add to Cart
+                </button>
+              ) : (
+                <div className="flex items-center gap-4 bg-black text-white px-6 py-3 rounded-full w-max">
+                  <button
+                    onClick={() => updateQuantity(quantity - 1)}
+                    className="text-xl font-bold px-3"
+                  >
+                    −
+                  </button>
+
+                  <span className="font-bold text-lg">{quantity}</span>
+
+                  <button
+                    onClick={() => updateQuantity(quantity + 1)}
+                    className="text-xl font-bold px-3"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
