@@ -17,6 +17,5 @@ import router from "./routes/concert.js";
 app.use("/api/v1", router);
 
 app.listen(process.env.PORT, () => {
-  console.log("sever started");
+  console.log("sever started at port " + process.env.PORT);
 });
-
