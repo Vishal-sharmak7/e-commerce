@@ -3,26 +3,27 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import Shop from "./Shop";
 import { useNavigate } from "react-router-dom";
+import { RxCross2 } from "react-icons/rx";
 
 const Cart = () => {
   const userId = localStorage.getItem("_id");
+  const navigate = useNavigate();
+
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  const navigate = useNavigate();
   // 🔥 Fetch Cart
   const fetchCart = async () => {
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/cart/${userId}`
       );
-
       setCart(res.data.items || []);
-      setLoading(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load cart");
+    } finally {
       setLoading(false);
     }
   };
@@ -78,14 +79,7 @@ const Cart = () => {
     0
   );
 
-  if (loading) {
-    return (
-      <div className="h-[60vh] flex items-center justify-center font-black">
-        Loading Cart...
-      </div>
-    );
-  }
-
+  // 🔹 Razorpay Loader
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
@@ -96,22 +90,21 @@ const Cart = () => {
     });
   };
 
-
+  // 💳 Checkout
   const handleCheckout = async () => {
-    if (checkoutLoading) return; 
+    if (checkoutLoading) return;
+    setCheckoutLoading(true);
 
-    const userId = localStorage.getItem("_id");
     const token = localStorage.getItem("token");
-
     if (!userId || !token) {
       toast.error("Please login to continue");
       setCheckoutLoading(false);
       return;
     }
 
-    const resScript = await loadRazorpay();
-    if (!resScript) {
-      toast.error("Razorpay SDK failed to load");
+    const loaded = await loadRazorpay();
+    if (!loaded) {
+      toast.error("Razorpay failed to load");
       setCheckoutLoading(false);
       return;
     }
@@ -130,9 +123,7 @@ const Cart = () => {
           })),
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -146,29 +137,24 @@ const Cart = () => {
         description: "Order Payment",
         order_id: razorpayOrder.id,
 
-        handler: async function (response) {
+        handler: async (response) => {
           try {
             const verifyRes = await axios.post(
               `${import.meta.env.VITE_API_URL}/order/verify`,
               response,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
+              { headers: { Authorization: `Bearer ${token}` } }
             );
 
             if (verifyRes.data.success) {
               toast.success("Payment successful 🎉");
-
               await clearCart();
               window.dispatchEvent(new Event("cart-change"));
               navigate("/");
             }
-          } catch (err) {
+          } catch {
             toast.error("Payment verification failed");
           } finally {
-            setCheckoutLoading(false); // ✅ stop loader after payment
+            setCheckoutLoading(false);
           }
         },
 
@@ -177,41 +163,47 @@ const Cart = () => {
           email: localStorage.getItem("email"),
         },
 
-        theme: {
-          color: "#000000",
-        },
+        theme: { color: "#000000" },
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error(err);
+      new window.Razorpay(options).open();
+    } catch {
       toast.error("Payment failed");
       setCheckoutLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center font-black">
+        Loading Cart...
+      </div>
+    );
+  }
+
   return (
     <>
-      <section className="pt-32 pb-24 px-6 bg-gray-100 min-h-screen">
+      <section className="pt-24 sm:pt-32 pb-20 px-4 sm:px-6 bg-gray-100 min-h-screen">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-black mb-10">Your Cart</h1>
+          <h1 className="text-3xl sm:text-4xl font-black mb-10">
+            Your Cart
+          </h1>
 
           {cart.length === 0 ? (
             <p className="text-gray-500">Your cart is empty.</p>
           ) : (
             <>
-              {/* Cart Items */}
+              {/* 🛒 Cart Items */}
               <div className="space-y-6">
                 {cart.map((item) => (
                   <div
                     key={item.product._id}
-                    className="flex gap-6 bg-white p-5 rounded-2xl shadow"
+                    className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-4 sm:p-5 rounded-2xl shadow"
                   >
                     <img
                       src={item.product.image}
                       alt={item.product.title}
-                      className="w-28 h-28 object-cover rounded-xl"
+                      className="w-full sm:w-28 h-48 sm:h-28 object-cover rounded-xl"
                     />
 
                     <div className="flex-1">
@@ -229,9 +221,7 @@ const Cart = () => {
                         >
                           −
                         </button>
-
                         <span className="font-bold">{item.quantity}</span>
-
                         <button
                           onClick={() =>
                             updateQty(item.product._id, item.quantity + 1)
@@ -245,32 +235,34 @@ const Cart = () => {
 
                     <button
                       onClick={() => removeItem(item.product._id)}
-                      className="text-red-500 font-bold"
+                      className="text-red-600 font-bold self-start sm:self-auto sm:ml-auto cursor-pointer hover:scale-125 transition"
                     >
-                      ✕
+                      <RxCross2 />
                     </button>
                   </div>
                 ))}
               </div>
 
-              {/* Summary */}
-              <div className="mt-12 bg-white p-6 rounded-2xl shadow flex justify-between items-center">
+            
+              <div className="mt-12 bg-white p-5 sm:p-6 rounded-2xl shadow flex flex-col sm:flex-row gap-6 sm:justify-between sm:items-center">
                 <div>
                   <p className="text-sm text-gray-500">Total</p>
                   <p className="text-2xl font-black">₹{total}</p>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                   <button
                     onClick={clearCart}
-                    className="border border-black px-6 py-3 rounded-full text-sm font-bold"
+                    disabled={checkoutLoading}
+                    className="w-full sm:w-auto border border-black px-6 py-3 rounded-full text-sm font-bold hover:opacity-90"
                   >
                     Clear Cart
                   </button>
+
                   <button
                     onClick={handleCheckout}
                     disabled={checkoutLoading}
-                    className={`px-8 py-3 rounded-full font-bold relative flex items-center gap-2
+                    className={`w-full sm:w-auto px-8 py-3 rounded-full font-bold flex items-center justify-center gap-2
                       ${
                         checkoutLoading
                           ? "bg-gray-400 cursor-not-allowed"
@@ -292,6 +284,8 @@ const Cart = () => {
           )}
         </div>
       </section>
+
+      {/* 🔥 Related Merch */}
       <Shop limit={4} />
     </>
   );
